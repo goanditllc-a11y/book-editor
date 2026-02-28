@@ -89,8 +89,17 @@ def get_all_books():
     return books
 
 
+ALLOWED_BOOK_COLUMNS = {
+    'title', 'filename', 'original_path', 'edited_path',
+    'upload_date', 'file_type', 'total_chunks', 'processed_chunks',
+}
+
+
 def update_book(book_id, **kwargs):
     """Update columns of a book record."""
+    invalid = set(kwargs) - ALLOWED_BOOK_COLUMNS
+    if invalid:
+        raise ValueError(f"Invalid column(s): {invalid}")
     conn = get_db()
     fields = ', '.join(f"{k} = ?" for k in kwargs)
     values = list(kwargs.values()) + [book_id]

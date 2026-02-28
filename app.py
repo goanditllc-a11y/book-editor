@@ -212,7 +212,7 @@ def upload():
     edited_chunks = editor.edit_document(chunks, ai_results)
 
     # Save edited output
-    edited_filename = f"edited_{book_id}_{filename.rsplit('.', 1)[0]}.txt"
+    edited_filename = f"edited_{book_id}_{os.path.splitext(filename)[0]}.txt"
     edited_path = os.path.join(config.OUTPUT_FOLDER, edited_filename)
     with open(edited_path, 'w', encoding='utf-8') as out:
         out.write('\n\n'.join(edited_chunks))

@@ -19,7 +19,7 @@ import random
 # Phrase replacement map  (AI phrase → human alternatives)
 # ---------------------------------------------------------------------------
 PHRASE_REPLACEMENTS = {
-    r"\bin conclusion\b": ["to wrap things up", "all in all", "when it's all said and done", "at the end of the day"],
+    r"\bin conclusion\b": ["to wrap things up", "all in all", "when it's all said and done", "putting it all together"],
     r"\bto summarize\b": ["in short", "to put it briefly", "the gist is", "bottom line"],
     r"\bit is important to note(?: that)?\b": ["keep in mind that", "worth remembering:", "don't overlook the fact that", "note that"],
     r"\bit is worth noting(?: that)?\b": ["worth mentioning", "notably", "interestingly", "it turns out that"],
@@ -95,7 +95,8 @@ def _replace_phrases(text):
         def _replacer(m, alts=alternatives):
             choice = random.choice(alts)
             # Preserve capitalisation
-            if m.group(0)[0].isupper():
+            matched = m.group(0)
+            if matched and choice and matched[0].isupper():
                 return choice[0].upper() + choice[1:]
             return choice
         text = pattern.sub(_replacer, text)
