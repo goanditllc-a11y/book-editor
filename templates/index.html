@@ -1,0 +1,149 @@
+{% extends "base.html" %}
+{% block title %}Book Editor — Home{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Upload Card -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm h-100">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0"><i class="bi bi-cloud-upload me-2"></i>Upload a Book</h5>
+      </div>
+      <div class="card-body">
+        <form action="{{ url_for('upload') }}" method="post" enctype="multipart/form-data" id="uploadForm">
+          <div class="mb-3">
+            <label for="title" class="form-label fw-semibold">Title <span class="text-muted fw-normal">(optional)</span></label>
+            <input
+              type="text"
+              class="form-control"
+              id="title"
+              name="title"
+              placeholder="Leave blank to use filename"
+            />
+          </div>
+          <div class="mb-3">
+            <label for="file" class="form-label fw-semibold">File</label>
+            <input
+              type="file"
+              class="form-control"
+              id="file"
+              name="file"
+              accept=".pdf,.epub,.txt,.docx"
+              required
+            />
+            <div class="form-text">Supported formats: PDF, EPUB, TXT, DOCX (max 100 MB)</div>
+          </div>
+
+          <!-- Progress bar (shown while processing) -->
+          <div id="progressWrap" class="mb-3 d-none">
+            <div class="d-flex justify-content-between mb-1">
+              <small class="text-muted">Processing…</small>
+            </div>
+            <div class="progress">
+              <div
+                id="progressBar"
+                class="progress-bar progress-bar-striped progress-bar-animated bg-primary"
+                role="progressbar"
+                style="width: 100%"
+                aria-valuenow="100"
+                aria-valuemin="0"
+                aria-valuemax="100"
+              ></div>
+            </div>
+          </div>
+
+          <button type="submit" class="btn btn-primary w-100" id="uploadBtn">
+            <i class="bi bi-upload me-1"></i>Upload &amp; Analyse
+          </button>
+        </form>
+      </div>
+      <div class="card-footer text-muted small">
+        <i class="bi bi-info-circle me-1"></i>
+        Files are processed entirely offline — no data leaves your machine.
+      </div>
+    </div>
+  </div>
+
+  <!-- Book List -->
+  <div class="col-lg-7">
+    <div class="card shadow-sm">
+      <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
+        <h5 class="mb-0"><i class="bi bi-collection me-2"></i>Your Library</h5>
+        <span class="badge bg-light text-dark">{{ books|length }} book{{ 's' if books|length != 1 else '' }}</span>
+      </div>
+      <div class="card-body p-0">
+        {% if books %}
+        <div class="list-group list-group-flush">
+          {% for item in books %}
+          {% set book = item.book %}
+          {% set rating = item.rating %}
+          <a href="{{ url_for('book_detail', book_id=book.id) }}" class="list-group-item list-group-item-action px-4 py-3">
+            <div class="d-flex align-items-start gap-3">
+              <div class="file-icon text-primary fs-2">
+                {% if book.file_type == 'pdf' %}
+                  <i class="bi bi-file-earmark-pdf"></i>
+                {% elif book.file_type == 'epub' %}
+                  <i class="bi bi-book"></i>
+                {% elif book.file_type == 'docx' %}
+                  <i class="bi bi-file-earmark-word"></i>
+                {% else %}
+                  <i class="bi bi-file-earmark-text"></i>
+                {% endif %}
+              </div>
+              <div class="flex-grow-1 min-width-0">
+                <div class="d-flex justify-content-between align-items-baseline">
+                  <h6 class="mb-0 text-truncate fw-semibold">{{ book.title }}</h6>
+                  <small class="text-muted ms-2 text-nowrap">
+                    {{ book.upload_date[:10] }}
+                  </small>
+                </div>
+                <div class="mt-1">
+                  <span class="badge bg-light text-dark border me-1">{{ book.file_type|upper }}</span>
+                  {% if book.total_chunks %}
+                  <span class="badge bg-light text-dark border me-1">
+                    <i class="bi bi-puzzle me-1"></i>{{ book.total_chunks }} chunk{{ 's' if book.total_chunks != 1 else '' }}
+                  </span>
+                  {% endif %}
+                </div>
+                {% if rating %}
+                <div class="mt-2 d-flex flex-wrap gap-2">
+                  <span class="score-pill" title="Overall Score">
+                    <i class="bi bi-star-fill text-warning me-1"></i>{{ rating.overall_score|round(0)|int }}
+                  </span>
+                  <span class="score-pill {% if rating.ai_content_percentage > 50 %}text-danger{% else %}text-success{% endif %}" title="AI Content %">
+                    <i class="bi bi-robot me-1"></i>{{ rating.ai_content_percentage|round(0)|int }}% AI
+                  </span>
+                </div>
+                {% endif %}
+              </div>
+              <div class="text-muted">
+                <i class="bi bi-chevron-right"></i>
+              </div>
+            </div>
+          </a>
+          {% endfor %}
+        </div>
+        {% else %}
+        <div class="text-center text-muted py-5">
+          <i class="bi bi-inbox display-4 d-block mb-3"></i>
+          <p>No books yet. Upload one to get started!</p>
+        </div>
+        {% endif %}
+      </div>
+    </div>
+  </div>
+
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+  document.getElementById('uploadForm').addEventListener('submit', function () {
+    document.getElementById('progressWrap').classList.remove('d-none');
+    document.getElementById('uploadBtn').disabled = true;
+    document.getElementById('uploadBtn').innerHTML =
+      '<span class="spinner-border spinner-border-sm me-1" role="status" aria-hidden="true"></span>Processing…';
+  });
+</script>
+{% endblock %}

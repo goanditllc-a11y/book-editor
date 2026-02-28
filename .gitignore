@@ -1,0 +1,16 @@
+uploads/
+output/
+*.db
+__pycache__/
+*.pyc
+*.pyo
+dist/
+build/
+*.egg-info/
+.venv/
+venv/
+env/
+.env
+*.log
+.DS_Store
+Thumbs.db

@@ -1,0 +1,91 @@
+/* ============================================================
+   Book Editor — Custom Styles
+   ============================================================ */
+
+/* Layout */
+body {
+  background-color: #f8f9fa;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+main.container {
+  flex: 1;
+}
+
+/* Navbar brand */
+.navbar-brand {
+  font-size: 1.25rem;
+  letter-spacing: 0.03em;
+}
+
+/* Score pills */
+.score-pill {
+  font-size: 0.78rem;
+  background: #f0f0f0;
+  border: 1px solid #dee2e6;
+  border-radius: 20px;
+  padding: 2px 10px;
+  display: inline-flex;
+  align-items: center;
+}
+
+/* Chunk preview cells */
+.chunk-preview {
+  max-width: 260px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Preserve whitespace in accordion bodies */
+.pre-wrap {
+  white-space: pre-wrap;
+  word-break: break-word;
+  max-height: 400px;
+  overflow-y: auto;
+}
+
+/* File icon sizing */
+.file-icon {
+  flex-shrink: 0;
+  width: 40px;
+  text-align: center;
+}
+
+/* List group hover */
+.list-group-item-action:hover {
+  background-color: #eef4ff;
+}
+
+/* Progress bar transitions */
+.progress-bar {
+  transition: width 0.5s ease;
+}
+
+/* Card header slight gradient */
+.card-header.bg-primary {
+  background: linear-gradient(90deg, #0d6efd, #3a8dff) !important;
+}
+.card-header.bg-secondary {
+  background: linear-gradient(90deg, #6c757d, #8c9ba8) !important;
+}
+.card-header.bg-danger {
+  background: linear-gradient(90deg, #dc3545, #e05c6a) !important;
+}
+
+/* Footer */
+.footer {
+  font-size: 0.85rem;
+}
+
+/* Responsive table font */
+@media (max-width: 768px) {
+  .chunk-preview {
+    display: none;
+  }
+  table td, table th {
+    font-size: 0.8rem;
+  }
+}

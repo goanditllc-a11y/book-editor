@@ -1,0 +1,260 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title }} — Book Editor{% endblock %}
+
+{% block content %}
+
+<!-- Breadcrumb -->
+<nav aria-label="breadcrumb" class="mb-3">
+  <ol class="breadcrumb">
+    <li class="breadcrumb-item"><a href="{{ url_for('index') }}">Home</a></li>
+    <li class="breadcrumb-item active" aria-current="page">{{ book.title }}</li>
+  </ol>
+</nav>
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-3 mb-4">
+  <div>
+    <h2 class="mb-0 fw-bold">{{ book.title }}</h2>
+    <div class="text-muted mt-1">
+      <span class="badge bg-secondary me-1">{{ book.file_type|upper }}</span>
+      Uploaded {{ book.upload_date[:10] }}
+    </div>
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    {% if book.edited_path %}
+    <a href="{{ url_for('download', book_id=book.id) }}" class="btn btn-success">
+      <i class="bi bi-download me-1"></i>Download Edited
+    </a>
+    {% endif %}
+    <form action="{{ url_for('delete_book', book_id=book.id) }}" method="post"
+          onsubmit="return confirm('Delete this book and all its data?')">
+      <button type="submit" class="btn btn-outline-danger">
+        <i class="bi bi-trash me-1"></i>Delete
+      </button>
+    </form>
+  </div>
+</div>
+
+<!-- Stats row -->
+<div class="row g-3 mb-4">
+  <!-- Processing stats -->
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-2 text-uppercase small fw-semibold">
+          <i class="bi bi-gear me-1"></i>Processing
+        </h6>
+        <div class="d-flex justify-content-between mt-3">
+          <div class="text-center">
+            <div class="display-6 fw-bold text-primary">{{ book.total_chunks }}</div>
+            <small class="text-muted">Total Chunks</small>
+          </div>
+          <div class="text-center">
+            <div class="display-6 fw-bold text-success">{{ book.processed_chunks }}</div>
+            <small class="text-muted">Processed</small>
+          </div>
+          <div class="text-center">
+            <div class="display-6 fw-bold text-warning">{{ flagged_chunks|length }}</div>
+            <small class="text-muted">AI Flagged</small>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- AI Detection -->
+  {% if rating %}
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-2 text-uppercase small fw-semibold">
+          <i class="bi bi-robot me-1"></i>AI Detection
+        </h6>
+        {% set ai_pct = rating.ai_content_percentage|round(0)|int %}
+        <div class="text-center mt-2">
+          <div class="display-5 fw-bold {% if ai_pct > 60 %}text-danger{% elif ai_pct > 35 %}text-warning{% else %}text-success{% endif %}">
+            {{ ai_pct }}%
+          </div>
+          <small class="text-muted">Estimated AI Content</small>
+        </div>
+        <div class="progress mt-3" style="height: 10px;">
+          <div
+            class="progress-bar {% if ai_pct > 60 %}bg-danger{% elif ai_pct > 35 %}bg-warning{% else %}bg-success{% endif %}"
+            role="progressbar"
+            style="width: {{ ai_pct }}%"
+            aria-valuenow="{{ ai_pct }}"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          ></div>
+        </div>
+        <div class="mt-2 text-center small text-muted">
+          {% if ai_pct > 60 %}
+            <span class="text-danger"><i class="bi bi-exclamation-triangle me-1"></i>High AI probability</span>
+          {% elif ai_pct > 35 %}
+            <span class="text-warning"><i class="bi bi-question-circle me-1"></i>Mixed content</span>
+          {% else %}
+            <span class="text-success"><i class="bi bi-check-circle me-1"></i>Likely human-written</span>
+          {% endif %}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Ratings -->
+  <div class="col-md-4">
+    <div class="card h-100 shadow-sm">
+      <div class="card-body">
+        <h6 class="card-subtitle text-muted mb-2 text-uppercase small fw-semibold">
+          <i class="bi bi-bar-chart me-1"></i>Quality Ratings
+        </h6>
+
+        {% macro score_bar(label, value, colour='primary') %}
+        <div class="mb-2">
+          <div class="d-flex justify-content-between small mb-1">
+            <span>{{ label }}</span>
+            <span class="fw-semibold">{{ value|round(0)|int }}</span>
+          </div>
+          <div class="progress" style="height: 8px;">
+            <div
+              class="progress-bar bg-{{ colour }}"
+              role="progressbar"
+              style="width: {{ value }}%"
+              aria-valuenow="{{ value }}"
+              aria-valuemin="0"
+              aria-valuemax="100"
+            ></div>
+          </div>
+        </div>
+        {% endmacro %}
+
+        {{ score_bar('Readability', rating.readability_score, 'info') }}
+        {{ score_bar('Originality', rating.originality_score, 'warning') }}
+        {{ score_bar('Quality', rating.quality_score, 'success') }}
+
+        <hr class="my-2" />
+        <div class="d-flex justify-content-between align-items-center">
+          <span class="fw-semibold">Overall</span>
+          <span class="badge bg-primary fs-6">{{ rating.overall_score|round(0)|int }} / 100</span>
+        </div>
+        <div class="progress mt-1" style="height: 10px;">
+          <div
+            class="progress-bar bg-primary"
+            role="progressbar"
+            style="width: {{ rating.overall_score }}%"
+            aria-valuenow="{{ rating.overall_score }}"
+            aria-valuemin="0"
+            aria-valuemax="100"
+          ></div>
+        </div>
+      </div>
+    </div>
+  </div>
+  {% endif %}
+</div>
+
+<!-- Chunks Table -->
+{% if chunks %}
+<div class="card shadow-sm mb-4">
+  <div class="card-header d-flex justify-content-between align-items-center">
+    <h5 class="mb-0"><i class="bi bi-list-ul me-2"></i>Content Chunks</h5>
+    <div>
+      <span class="badge bg-danger me-1">{{ flagged_chunks|length }} AI flagged</span>
+      <span class="badge bg-success">{{ chunks|length - flagged_chunks|length }} clean</span>
+    </div>
+  </div>
+  <div class="card-body p-0">
+    <div class="table-responsive">
+      <table class="table table-hover mb-0">
+        <thead class="table-light">
+          <tr>
+            <th style="width:60px">#</th>
+            <th style="width:120px">AI Score</th>
+            <th style="width:90px">Status</th>
+            <th>Preview (original)</th>
+            <th>Preview (edited)</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for chunk in chunks %}
+          <tr class="{% if chunk.is_ai_flagged %}table-danger{% endif %}">
+            <td class="text-muted small align-middle">{{ loop.index }}</td>
+            <td class="align-middle">
+              <div class="progress" style="height: 8px;">
+                <div
+                  class="progress-bar {% if chunk.ai_score > 60 %}bg-danger{% elif chunk.ai_score > 35 %}bg-warning{% else %}bg-success{% endif %}"
+                  style="width: {{ chunk.ai_score }}%"
+                ></div>
+              </div>
+              <small class="text-muted">{{ chunk.ai_score|round(1) }}%</small>
+            </td>
+            <td class="align-middle">
+              {% if chunk.is_ai_flagged %}
+                <span class="badge bg-danger"><i class="bi bi-robot me-1"></i>AI</span>
+              {% else %}
+                <span class="badge bg-success"><i class="bi bi-person me-1"></i>Human</span>
+              {% endif %}
+            </td>
+            <td class="align-middle small text-muted chunk-preview">
+              {{ chunk.original_text[:150] }}{% if chunk.original_text|length > 150 %}…{% endif %}
+            </td>
+            <td class="align-middle small chunk-preview {% if chunk.is_ai_flagged %}text-dark{% endif %}">
+              {{ chunk.edited_text[:150] }}{% if chunk.edited_text|length > 150 %}…{% endif %}
+            </td>
+          </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endif %}
+
+<!-- Flagged Passages -->
+{% if flagged_chunks %}
+<div class="card shadow-sm">
+  <div class="card-header bg-danger text-white">
+    <h5 class="mb-0">
+      <i class="bi bi-exclamation-triangle me-2"></i>AI-Flagged Passages
+    </h5>
+  </div>
+  <div class="card-body">
+    <p class="text-muted small mb-3">
+      The following passages were detected as likely AI-generated and have been rewritten in the edited output.
+    </p>
+    <div class="accordion" id="flaggedAccordion">
+      {% for chunk in flagged_chunks %}
+      <div class="accordion-item">
+        <h2 class="accordion-header">
+          <button
+            class="accordion-button collapsed"
+            type="button"
+            data-bs-toggle="collapse"
+            data-bs-target="#flagged-{{ chunk.id }}"
+            aria-expanded="false"
+          >
+            Chunk {{ chunk.chunk_index + 1 }}
+            <span class="badge bg-danger ms-2">{{ chunk.ai_score|round(1) }}% AI</span>
+          </button>
+        </h2>
+        <div id="flagged-{{ chunk.id }}" class="accordion-collapse collapse" data-bs-parent="#flaggedAccordion">
+          <div class="accordion-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <h6 class="text-muted text-uppercase small fw-semibold">Original</h6>
+                <div class="bg-light p-3 rounded small pre-wrap">{{ chunk.original_text }}</div>
+              </div>
+              <div class="col-md-6">
+                <h6 class="text-success text-uppercase small fw-semibold">Edited (humanised)</h6>
+                <div class="bg-light p-3 rounded small pre-wrap">{{ chunk.edited_text }}</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {% endfor %}
+    </div>
+  </div>
+</div>
+{% endif %}
+
+{% endblock %}
