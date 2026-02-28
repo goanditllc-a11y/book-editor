@@ -248,7 +248,7 @@ def rate(text: str, ai_score: float) -> dict:
             "quality_stars": 1.0,
             "overall_rating": 1.0,
             "readability_metrics": {},
-            "summary": "No text to analyse.",
+            "summary": "No text to analyze.",
         }
 
     readability_stars, metrics = _readability_stars(text)

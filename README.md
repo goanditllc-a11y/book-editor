@@ -1,6 +1,6 @@
 # 📚 Book Editor & Rater
 
-A local web application for uploading, analysing, rating and editing books, comics, blogs and any other literary content. Runs entirely on your machine — no cloud API required.
+A local web application for uploading, analyzing, rating and editing books, comics, blogs and any other literary content. Runs entirely on your machine — no cloud API required.
 
 ---
 
@@ -108,7 +108,7 @@ The executable will be at `dist/BookEditor/BookEditor.exe`.
 ## How It Works
 
 ### AI Detection
-The detector analyses text across six independent signals:
+The detector analyzes text across six independent signals:
 
 1. **Phrase Patterns** (30%) — counts known AI-generated phrases per 1,000 words.
 2. **Sentence Uniformity** (20%) — AI tends to write sentences of similar length; measured via coefficient of variation.

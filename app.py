@@ -170,7 +170,7 @@ def upload():
         analysis_json=analysis_json,
     )
 
-    flash(f'"{title or filename}" uploaded and analysed successfully!', "success")
+    flash(f'"{title or filename}" uploaded and analyzed successfully!', "success")
     return redirect(url_for("book_detail", book_id=book_id))
 
 

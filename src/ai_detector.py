@@ -2,7 +2,7 @@
 src/ai_detector.py
 Local AI-content detection engine — no external API calls.
 
-Analyses six orthogonal signals and combines them into a single ai_score
+Analyzes six orthogonal signals and combines them into a single ai_score
 in the range [0.0, 1.0] (0 = human-written, 1 = AI-generated).
 """
 
@@ -273,7 +273,7 @@ def _flagged_sentences(text: str, max_sentences: int = 10) -> list[str]:
 CHUNK_WORDS = 5000
 
 
-def _analyse_chunk(chunk: str) -> dict:
+def _analyze_chunk(chunk: str) -> dict:
     words = _words(chunk)
     total = len(words)
 
@@ -316,7 +316,7 @@ def _split_into_chunks(text: str, chunk_words: int = CHUNK_WORDS) -> list[str]:
 
 def detect(text: str) -> dict:
     """
-    Analyse *text* for AI-generated content.
+    Analyze *text* for AI-generated content.
 
     Returns a dict with keys:
         ai_score, ai_percentage, confidence, components,
@@ -333,7 +333,7 @@ def detect(text: str) -> dict:
         }
 
     chunks = _split_into_chunks(text)
-    chunk_results = [_analyse_chunk(c) for c in chunks]
+    chunk_results = [_analyze_chunk(c) for c in chunks]
 
     # Average scores across chunks
     avg_ai = statistics.mean(r["ai_score"] for r in chunk_results)
