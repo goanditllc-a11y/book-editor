@@ -45,7 +45,6 @@ AI_PHRASES: list[str] = [
     "i'd be happy to",
     "certainly",
     "i apologize",
-    "I apologize",
     "crucial",
     "utilize",
     "leverage",

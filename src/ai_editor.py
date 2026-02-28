@@ -126,17 +126,16 @@ def _apply_phrase_replacements(text: str) -> tuple[str, list[str]]:
 
         if rep.is_regex:
             compiled = re.compile(rep.pattern, flags | re.DOTALL)
-            def _sub(m: re.Match, repl: str = choice, rep_pat: str = rep.pattern) -> str:  # noqa: ANN001
+            def _sub_re(m: re.Match, repl: str = choice) -> str:  # noqa: ANN001
                 changes.append(f"'{m.group(0).strip()}' → '{repl}'")
                 return repl
-            new_text = compiled.sub(_sub, text)
+            new_text = compiled.sub(_sub_re, text)
         else:
-            pattern_lower = rep.pattern.lower()
             compiled = re.compile(re.escape(rep.pattern), flags)
-            def _sub(m: re.Match, repl: str = choice, orig: str = rep.pattern) -> str:  # noqa: ANN001
+            def _sub_lit(m: re.Match, repl: str = choice, orig: str = rep.pattern) -> str:  # noqa: ANN001
                 changes.append(f"'{orig}' → '{repl}'")
                 return repl
-            new_text = compiled.sub(_sub, text)
+            new_text = compiled.sub(_sub_lit, text)
 
         text = new_text
 

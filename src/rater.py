@@ -217,7 +217,9 @@ def _generate_summary(
     else:
         parts.append("writing quality could be improved")
 
-    summary = ", ".join(parts[:2]) + ". " + parts[2].capitalize() + "."
+    summary = ", ".join(parts[:2]) + "."
+    if len(parts) > 2:
+        summary += " " + parts[2].capitalize() + "."
 
     if ai_percentage >= 40:
         summary += " Consider using the Auto-Edit feature to improve originality."
