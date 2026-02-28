@@ -1,0 +1,180 @@
+{% extends "base.html" %}
+{% block title %}Dashboard — Book Editor & Rater{% endblock %}
+
+{% block content %}
+<div class="row g-4">
+
+  <!-- Left column: upload + stats -->
+  <div class="col-lg-7">
+
+    <!-- Upload Card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header bg-primary text-white">
+        <h5 class="mb-0">📤 Upload a Book or Document</h5>
+      </div>
+      <div class="card-body">
+        <form id="uploadForm" action="{{ url_for('upload') }}" method="POST"
+              enctype="multipart/form-data">
+
+          <!-- Drop zone -->
+          <div id="dropZone" class="drop-zone mb-3 text-center p-5 rounded">
+            <div id="dropZoneContent">
+              <div class="display-4 mb-2">📂</div>
+              <p class="mb-1 fw-semibold">Drag &amp; drop your file here</p>
+              <p class="text-muted small">or click to browse</p>
+              <p class="text-muted small">PDF, EPUB, DOCX, TXT — up to 200 MB</p>
+            </div>
+            <div id="dropZoneFile" class="d-none">
+              <div class="display-4 mb-2">✅</div>
+              <p class="mb-0 fw-semibold" id="dropZoneFileName"></p>
+              <p class="text-muted small" id="dropZoneFileSize"></p>
+            </div>
+            <input type="file" id="fileInput" name="file" class="d-none"
+                   accept=".pdf,.epub,.docx,.txt" />
+          </div>
+
+          <div class="row g-2 mb-3">
+            <div class="col-md-6">
+              <label class="form-label small text-muted">Title
+                <span class="text-muted fw-normal">(optional — auto-detected)</span>
+              </label>
+              <input type="text" class="form-control" name="title"
+                     placeholder="Leave blank to auto-detect" />
+            </div>
+            <div class="col-md-6">
+              <label class="form-label small text-muted">Author
+                <span class="text-muted fw-normal">(optional)</span>
+              </label>
+              <input type="text" class="form-control" name="author"
+                     placeholder="Leave blank to auto-detect" />
+            </div>
+          </div>
+
+          <!-- Progress bar (hidden until upload) -->
+          <div id="uploadProgress" class="d-none mb-3">
+            <div class="progress" style="height:20px;">
+              <div class="progress-bar progress-bar-striped progress-bar-animated
+                           bg-primary w-100" role="progressbar">
+                Uploading &amp; Analyzing…
+              </div>
+            </div>
+          </div>
+
+          <button type="submit" id="uploadBtn" class="btn btn-primary w-100">
+            ⬆️ Upload &amp; Analyze
+          </button>
+        </form>
+      </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="row g-3">
+      <div class="col-4">
+        <div class="card text-center shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold text-primary">
+              {{ stats.total_books or 0 }}
+            </div>
+            <div class="small text-muted">Books Uploaded</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card text-center shadow-sm h-100">
+          <div class="card-body py-3">
+            {% set avg_ai = ((stats.avg_ai_score or 0) * 100) | round | int %}
+            <div class="display-6 fw-bold
+              {% if avg_ai >= 60 %}text-danger
+              {% elif avg_ai >= 30 %}text-warning
+              {% else %}text-success{% endif %}">
+              {{ avg_ai }}%
+            </div>
+            <div class="small text-muted">Avg AI Content</div>
+          </div>
+        </div>
+      </div>
+      <div class="col-4">
+        <div class="card text-center shadow-sm h-100">
+          <div class="card-body py-3">
+            <div class="display-6 fw-bold text-warning">
+              {{ (stats.avg_rating or 0) | round(1) }}
+              <span class="fs-4">⭐</span>
+            </div>
+            <div class="small text-muted">Avg Rating</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left column -->
+
+  <!-- Right column: recent books -->
+  <div class="col-lg-5">
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">🕐 Recent Books</h5>
+        <a href="{{ url_for('library') }}" class="btn btn-sm btn-outline-secondary">
+          View All
+        </a>
+      </div>
+      <div class="card-body p-0">
+        {% if recent %}
+          <ul class="list-group list-group-flush">
+            {% for book in recent %}
+            <li class="list-group-item">
+              <div class="d-flex justify-content-between align-items-start">
+                <div class="overflow-hidden me-2">
+                  <a href="{{ url_for('book_detail', book_id=book.id) }}"
+                     class="fw-semibold text-decoration-none text-truncate d-block">
+                    {{ book.title | truncate(40) }}
+                  </a>
+                  <small class="text-muted">
+                    {{ book.author or 'Unknown' }} &mdash;
+                    {{ book.file_type }} &mdash;
+                    {{ '{:,}'.format(book.word_count or 0) }} words
+                  </small>
+                </div>
+                <div class="text-end flex-shrink-0">
+                  {% set ai_pct = ((book.ai_score or 0) * 100) | round | int %}
+                  <span class="badge
+                    {% if ai_pct >= 60 %}bg-danger
+                    {% elif ai_pct >= 30 %}bg-warning text-dark
+                    {% else %}bg-success{% endif %}">
+                    {{ ai_pct }}% AI
+                  </span>
+                  <br/>
+                  <small class="text-warning">
+                    {% for _ in range((book.overall_rating or 0) | round | int) %}⭐{% endfor %}
+                  </small>
+                </div>
+              </div>
+            </li>
+            {% endfor %}
+          </ul>
+        {% else %}
+          <div class="text-center text-muted py-5">
+            <div class="fs-1">📭</div>
+            <p>No books uploaded yet.</p>
+            <p class="small">Upload your first book using the form on the left.</p>
+          </div>
+        {% endif %}
+      </div>
+    </div>
+
+    <!-- Instructions -->
+    <div class="card shadow-sm mt-4">
+      <div class="card-header"><h6 class="mb-0">ℹ️ How it works</h6></div>
+      <div class="card-body small text-muted">
+        <ol class="ps-3 mb-0">
+          <li class="mb-1"><strong>Upload</strong> any PDF, EPUB, DOCX or TXT file.</li>
+          <li class="mb-1"><strong>Analysis</strong> runs automatically — AI detection + readability rating.</li>
+          <li class="mb-1"><strong>Review</strong> the detailed breakdown on the book page.</li>
+          <li class="mb-1"><strong>Auto-Edit</strong> to replace AI phrases with natural alternatives.</li>
+          <li><strong>Download</strong> the cleaned-up version as a TXT file.</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+
+</div><!-- /row -->
+{% endblock %}

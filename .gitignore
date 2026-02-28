@@ -1,0 +1,16 @@
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.Python
+*.egg-info/
+dist/
+build/
+uploads/
+instance/
+*.db
+.env
+venv/
+env/
+*.spec.bak
+node_modules/

@@ -1,0 +1,111 @@
+/* ============================================================
+   Book Editor & Rater — Custom Styles
+   ============================================================ */
+
+/* ---- Drop Zone ---- */
+.drop-zone {
+  border: 2px dashed #6c757d;
+  background: #f8f9fa;
+  cursor: pointer;
+  transition: background 0.2s, border-color 0.2s;
+  min-height: 200px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.drop-zone:hover,
+.drop-zone.drag-over {
+  border-color: #0d6efd;
+  background: #e7f0ff;
+}
+.drop-zone.has-file {
+  border-color: #198754;
+  background: #e8f5e9;
+}
+
+/* ---- AI Score Circle ---- */
+.ai-score-circle {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  font-size: 2rem;
+  font-weight: 700;
+  color: #fff;
+  border: 6px solid transparent;
+}
+.ai-score-circle.ai-high {
+  background: #dc3545;
+  border-color: #b02a37;
+}
+.ai-score-circle.ai-medium {
+  background: #ffc107;
+  color: #212529;
+  border-color: #d39e00;
+}
+.ai-score-circle.ai-low {
+  background: #198754;
+  border-color: #157347;
+}
+
+/* ---- AI Sentence Highlight ---- */
+.ai-sentence {
+  background: #fff3cd;
+  border-left: 3px solid #ffc107;
+  font-style: italic;
+  color: #6c757d;
+}
+
+/* ---- Text Preview ---- */
+.text-preview {
+  max-height: 400px;
+  overflow-y: auto;
+  background: #f8f9fa;
+  padding: 1rem;
+  border-radius: 0.375rem;
+  font-family: 'Georgia', serif;
+  line-height: 1.7;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+/* ---- Star Rating ---- */
+.star-display {
+  letter-spacing: 0.1em;
+}
+
+/* ---- Progress bars ---- */
+.progress {
+  border-radius: 4px;
+}
+
+/* ---- Responsive tweaks ---- */
+@media (max-width: 576px) {
+  .ai-score-circle {
+    width: 90px;
+    height: 90px;
+    font-size: 1.5rem;
+  }
+}
+
+/* ---- Badges ---- */
+.bg-danger-subtle  { background-color: #f8d7da !important; }
+.bg-warning-subtle { background-color: #fff3cd !important; }
+
+/* ---- Details summary cursor ---- */
+details summary {
+  cursor: pointer;
+}
+
+/* ---- Table action buttons ---- */
+.btn-group .btn {
+  padding: 0.2rem 0.45rem;
+}
+
+/* ---- Navbar brand ---- */
+.navbar-brand {
+  letter-spacing: 0.02em;
+}

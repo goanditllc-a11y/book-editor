@@ -1,0 +1,351 @@
+{% extends "base.html" %}
+{% block title %}{{ book.title | truncate(50) }} — Book Editor & Rater{% endblock %}
+
+{% block content %}
+
+{% set detection = analysis.get('detection', {}) %}
+{% set rating = analysis.get('rating', {}) %}
+{% set edit_result = analysis.get('edit_result', {}) %}
+{% set ai_pct = detection.get('ai_percentage', ((book.ai_score or 0) * 100) | round | int) %}
+{% set components = detection.get('components', {}) %}
+
+<!-- Header -->
+<div class="d-flex justify-content-between align-items-start flex-wrap gap-2 mb-4">
+  <div>
+    <h2 class="mb-1">{{ book.title }}</h2>
+    {% if book.author %}
+      <p class="text-muted mb-0">✍️ {{ book.author }}</p>
+    {% endif %}
+  </div>
+  <div class="d-flex gap-2 flex-wrap">
+    <a href="{{ url_for('library') }}" class="btn btn-outline-secondary btn-sm">
+      ← Library
+    </a>
+    <a href="{{ url_for('download_book', book_id=book.id) }}"
+       class="btn btn-success btn-sm">
+      ⬇️ Download
+    </a>
+    <form method="POST"
+          action="{{ url_for('delete_book', book_id=book.id) }}"
+          onsubmit="return confirm('Permanently delete this book?');">
+      <button type="submit" class="btn btn-outline-danger btn-sm">🗑 Delete</button>
+    </form>
+  </div>
+</div>
+
+<!-- Info row -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body py-3">
+        <span class="badge bg-secondary fs-6">{{ book.file_type }}</span>
+        <div class="small text-muted mt-1">File Type</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="fw-bold fs-5">{{ '{:,}'.format(book.word_count or 0) }}</div>
+        <div class="small text-muted">Words</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body py-3">
+        {% if book.file_size %}
+          {% if book.file_size > 1048576 %}
+            <div class="fw-bold fs-5">{{ (book.file_size / 1048576) | round(1) }} MB</div>
+          {% else %}
+            <div class="fw-bold fs-5">{{ (book.file_size / 1024) | round(1) }} KB</div>
+          {% endif %}
+        {% else %}
+          <div class="fw-bold fs-5">—</div>
+        {% endif %}
+        <div class="small text-muted">File Size</div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card text-center shadow-sm h-100">
+      <div class="card-body py-3">
+        <div class="fw-bold fs-5">
+          {{ book.upload_date | truncate(16, True, '') if book.upload_date else '—' }}
+        </div>
+        <div class="small text-muted">Uploaded</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+
+  <!-- Left: AI Detection -->
+  <div class="col-lg-6">
+
+    <!-- AI Score card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header"><h5 class="mb-0">🤖 AI Content Detection</h5></div>
+      <div class="card-body">
+
+        <!-- Big percentage -->
+        <div class="text-center mb-3">
+          <div class="ai-score-circle
+            {% if ai_pct >= 60 %}ai-high
+            {% elif ai_pct >= 30 %}ai-medium
+            {% else %}ai-low{% endif %}">
+            {{ ai_pct }}%
+          </div>
+          <div class="mt-2 text-muted small">
+            AI Content &mdash;
+            Confidence:
+            <span class="fw-semibold">
+              {{ detection.get('confidence', 'unknown') | title }}
+            </span>
+          </div>
+        </div>
+
+        <!-- Component breakdown -->
+        {% if components %}
+        <h6 class="text-muted mb-2">Component Breakdown</h6>
+        {% set comp_labels = {
+            'phrase_patterns': 'Phrase Patterns',
+            'sentence_uniformity': 'Sentence Uniformity',
+            'vocabulary_diversity': 'Vocabulary Diversity',
+            'burstiness': 'Burstiness',
+            'paragraph_uniformity': 'Paragraph Uniformity',
+            'filler_density': 'Filler Word Density'
+        } %}
+        {% for key, label in comp_labels.items() %}
+          {% set val = components.get(key, 0) %}
+          {% set pct = (val * 100) | round | int %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ label }}</span>
+              <span class="fw-semibold">{{ pct }}%</span>
+            </div>
+            <div class="progress" style="height:8px;">
+              <div class="progress-bar
+                {% if pct >= 60 %}bg-danger
+                {% elif pct >= 30 %}bg-warning
+                {% else %}bg-success{% endif %}"
+                role="progressbar"
+                style="width: {{ pct }}%;"
+                aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+        {% endif %}
+
+        <!-- Flagged phrases -->
+        {% set flagged = detection.get('flagged_phrases', []) %}
+        {% if flagged %}
+        <div class="mt-3">
+          <h6 class="text-muted mb-2">Flagged AI Phrases</h6>
+          <div class="d-flex flex-wrap gap-1">
+            {% for phrase in flagged %}
+              <span class="badge bg-danger-subtle text-danger-emphasis border border-danger-subtle">
+                {{ phrase }}
+              </span>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+        <!-- AI sentences -->
+        {% set ai_sents = detection.get('ai_sentences', []) %}
+        {% if ai_sents %}
+        <div class="mt-3">
+          <h6 class="text-muted mb-2">Sample AI-like Sentences</h6>
+          <div class="ai-sentences-list">
+            {% for sent in ai_sents[:5] %}
+              <div class="ai-sentence p-2 mb-1 rounded small">
+                "{{ sent | truncate(150) }}"
+              </div>
+            {% endfor %}
+          </div>
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- Edit AI Content card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header"><h5 class="mb-0">✏️ Auto-Edit AI Content</h5></div>
+      <div class="card-body">
+        {% if book.is_edited %}
+          <div class="alert alert-success mb-3">
+            ✅ This book has already been auto-edited.
+          </div>
+          {% if edit_result %}
+          <div class="mb-3">
+            <strong>Edit summary:</strong>
+            <ul class="mb-0 mt-1 small">
+              <li>{{ edit_result.get('changes_made', 0) }} changes made</li>
+              <li>AI score: {{ (edit_result.get('old_ai_score', 0) * 100) | round | int }}%
+                → {{ (edit_result.get('new_ai_score', 0) * 100) | round | int }}%</li>
+            </ul>
+          </div>
+          {% if edit_result.get('changes_list') %}
+          <details class="small">
+            <summary class="text-muted cursor-pointer">Show changes</summary>
+            <ul class="mt-2">
+              {% for ch in edit_result.changes_list %}
+                <li>{{ ch }}</li>
+              {% endfor %}
+            </ul>
+          </details>
+          {% endif %}
+          {% endif %}
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('edit_book', book_id=book.id) }}"
+              id="editForm">
+          <p class="text-muted small mb-3">
+            Automatically replaces AI phrases, adds natural contractions,
+            and varies sentence structure. The original text is preserved.
+          </p>
+          <button type="submit" id="editBtn" class="btn btn-warning w-100"
+                  onclick="showEditSpinner()">
+            {% if book.is_edited %}🔄 Re-Edit to Further Reduce AI{% else %}🪄 Auto-Edit to Remove AI Content{% endif %}
+          </button>
+        </form>
+        <div id="editSpinner" class="d-none mt-3 text-center">
+          <div class="spinner-border text-warning" role="status"></div>
+          <p class="small mt-2 text-muted">Editing in progress…</p>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /left -->
+
+  <!-- Right: Rating + Preview -->
+  <div class="col-lg-6">
+
+    <!-- Rating card -->
+    <div class="card shadow-sm mb-4">
+      <div class="card-header"><h5 class="mb-0">⭐ Book Rating</h5></div>
+      <div class="card-body">
+
+        <!-- Overall -->
+        <div class="text-center mb-4">
+          <div class="display-4 text-warning fw-bold">
+            {{ (book.overall_rating or 0) | round(1) }}
+          </div>
+          <div class="star-display fs-3 text-warning mb-1"
+               data-rating="{{ book.overall_rating or 0 }}">
+          </div>
+          <div class="text-muted small">Overall Rating (out of 5)</div>
+        </div>
+
+        <!-- Dimension breakdown -->
+        {% set dims = [
+            ('Readability',  rating.get('readability_stars', book.readability_score or 0)),
+            ('Originality',  rating.get('originality_stars', book.originality_score or 0)),
+            ('Quality',      rating.get('quality_stars', 0)),
+        ] %}
+        {% for label, val in dims %}
+          {% set pct = ((val / 5) * 100) | round | int %}
+          <div class="mb-2">
+            <div class="d-flex justify-content-between small mb-1">
+              <span>{{ label }}</span>
+              <span class="fw-semibold star-text"
+                    data-rating="{{ val | round(1) }}">
+                {{ val | round(1) }} / 5
+              </span>
+            </div>
+            <div class="progress" style="height:8px;">
+              <div class="progress-bar bg-warning"
+                   role="progressbar"
+                   style="width: {{ pct }}%;"
+                   aria-valuenow="{{ pct }}" aria-valuemin="0" aria-valuemax="100">
+              </div>
+            </div>
+          </div>
+        {% endfor %}
+
+        <!-- Readability metrics -->
+        {% set rm = rating.get('readability_metrics', {}) %}
+        {% if rm %}
+        <hr/>
+        <h6 class="text-muted small mb-2">Readability Metrics</h6>
+        <div class="row g-1 text-center small">
+          {% if rm.get('flesch_reading_ease') is not none %}
+          <div class="col-4">
+            <div class="fw-bold">{{ rm.flesch_reading_ease }}</div>
+            <div class="text-muted">Flesch Ease</div>
+          </div>
+          {% endif %}
+          {% if rm.get('fk_grade_level') is not none %}
+          <div class="col-4">
+            <div class="fw-bold">{{ rm.fk_grade_level }}</div>
+            <div class="text-muted">FK Grade</div>
+          </div>
+          {% endif %}
+          {% if rm.get('gunning_fog') is not none %}
+          <div class="col-4">
+            <div class="fw-bold">{{ rm.gunning_fog }}</div>
+            <div class="text-muted">Gunning Fog</div>
+          </div>
+          {% endif %}
+        </div>
+        {% endif %}
+
+        <!-- Summary -->
+        {% if rating.get('summary') %}
+        <hr/>
+        <div class="alert alert-info mb-0 small">
+          💡 {{ rating.summary }}
+        </div>
+        {% endif %}
+
+      </div>
+    </div>
+
+    <!-- Text preview -->
+    <div class="card shadow-sm">
+      <div class="card-header d-flex justify-content-between align-items-center">
+        <h5 class="mb-0">📄 Text Preview</h5>
+        {% if book.is_edited %}
+          <span class="badge bg-success">Edited Version</span>
+        {% else %}
+          <span class="badge bg-secondary">Original</span>
+        {% endif %}
+      </div>
+      <div class="card-body">
+        <div class="text-preview small">
+          {{ preview_text | e | replace('\n', '<br/>') | safe }}
+        </div>
+        {% if (book.word_count or 0) > 400 %}
+          <p class="text-muted small mt-2 mb-0">
+            Showing first 2,000 characters of
+            {{ '{:,}'.format(book.word_count) }} words.
+            <a href="{{ url_for('download_book', book_id=book.id) }}">Download</a>
+            to read the full text.
+          </p>
+        {% endif %}
+      </div>
+    </div>
+
+  </div><!-- /right -->
+
+</div><!-- /row -->
+
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showEditSpinner() {
+  document.getElementById('editBtn').disabled = true;
+  document.getElementById('editSpinner').classList.remove('d-none');
+}
+// Render star displays
+document.querySelectorAll('.star-display[data-rating]').forEach(function(el) {
+  const rating = parseFloat(el.dataset.rating) || 0;
+  el.textContent = renderStars(rating);
+});
+</script>
+{% endblock %}
